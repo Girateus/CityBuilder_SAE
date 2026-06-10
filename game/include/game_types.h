@@ -5,7 +5,7 @@
 #ifndef CITYBUILDER_GAME_TYPES_H
 #define CITYBUILDER_GAME_TYPES_H
 
-enum class TerrainTiles {
+enum class TerrainTile {
   kGrassA,
   kGrassB,
   kWaterA,
@@ -14,6 +14,10 @@ enum class TerrainTiles {
   kSnowB,
 };
 
-enum class RessourcesTiles { kWood, kRock, kFood };
+enum class ResourceTile {
+  kWood,
+  kRock,
+  kFood
+};
 
 #endif  // CITYBUILDER_GAME_TYPES_H

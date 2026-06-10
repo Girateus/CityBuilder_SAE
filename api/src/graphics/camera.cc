@@ -40,7 +40,7 @@ void Camera::HandleEvent(const sf::Event &event,
     const sf::Vector2f anchor =
         window.mapPixelToCoords({wheel->position.x, wheel->position.y}, view_);
     const float factor =
-        wheel->delta > 0 ? wheelZoomStep_ : 1.f / wheelZoomStep_;
+        wheel->delta < 0 ? wheelZoomStep_ : 1.f / wheelZoomStep_;
     Zoom(factor, anchor);
     return;
   }

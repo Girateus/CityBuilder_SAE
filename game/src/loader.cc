@@ -37,7 +37,7 @@ void Loader::visit(std::filesystem::path& path, Tilemap& tilemap) {
         std::getline(ts, field, ';'); int   type = std::stoi(field);
 
         tilemap.terrain_.emplace_back(
-            tiles::Tile<TerrainTiles>{{x, y}, static_cast<TerrainTiles>(type)});
+            tiles::Tile<TerrainTile>{{x, y}, static_cast<TerrainTile>(type)});
     }
 
     for (int i = 0; i < resourceCount && std::getline(ifs_, line); ++i) {
@@ -47,7 +47,7 @@ void Loader::visit(std::filesystem::path& path, Tilemap& tilemap) {
         std::getline(rs, field, ';'); int   type = std::stoi(field);
 
         tilemap.resources_.emplace_back(
-            tiles::Tile<RessourcesTiles>{{x, y}, static_cast<RessourcesTiles>(type)});
+            tiles::Tile<ResourceTile>{{x, y}, static_cast<ResourceTile>(type)});
     }
 
     close();

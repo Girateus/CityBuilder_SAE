@@ -10,6 +10,7 @@
 #include "loader.h"
 #include "saver.h"
 #include "tilemap.h"
+#include "ai/npc.h"
 
 namespace game {
 namespace {
@@ -26,6 +27,7 @@ bool isFullscreen_ = false;
 
 Tilemap map_;
 graphics::Camera camera_;
+api::ai::Npc npc_;
 
 void Setup() {
   window_.create(sf::VideoMode(window_size_u), "SFML window",
@@ -42,6 +44,8 @@ void Setup() {
     Saver saver;
     map_.Save(save_path, saver);
   }
+  npc_.Setup("_assets/Assets_Game_prog_Carusone_Matheo_2025_10_22/collecteur-de-pierre.png",
+                       world_size, {100, 100});
 }
 
 void ToggleFullscreen() {
@@ -84,9 +88,11 @@ void Loop() {
 
     camera_.Update(dt);
     camera_.Apply(window_);
+    npc_.Update(dt);
 
     window_.clear();
     map_.Draw(window_);
+    npc_.Draw(window_);
     window_.display();
   }
 }

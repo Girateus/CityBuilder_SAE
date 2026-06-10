@@ -7,15 +7,15 @@
 #include "game_types.h"
 #include "saver.h"
 #include "loader.h"
-#include "../../api/include/tiles/tilemap_generator.h"
+#include "tiles/tilemap_generator.h"
 
 void Tilemap::BuildRenderers(sf::Vector2f gridOffset) {
 
     if (terrain_tilesheet_.InitTileSheet("_assets/tiles/RTS_medieval@2_no_margins_transparent.png", 128)) {
-        terrain_tilesheet_.AddTile(TerrainTiles::kGrassA, 0, 0);
-        terrain_tilesheet_.AddTile(TerrainTiles::kGrassB, 1, 0);
-        terrain_tilesheet_.AddTile(TerrainTiles::kWaterA, 0, 2);
-        terrain_tilesheet_.AddTile(TerrainTiles::kWaterB, 1, 2);
+        terrain_tilesheet_.AddTile(TerrainTile::kGrassA, 0, 0);
+        terrain_tilesheet_.AddTile(TerrainTile::kGrassB, 1, 0);
+        terrain_tilesheet_.AddTile(TerrainTile::kWaterA, 0, 2);
+        terrain_tilesheet_.AddTile(TerrainTile::kWaterB, 1, 2);
 
         terrain_renderer_.SetTexture(terrain_tilesheet_.GetTexture());
         terrain_renderer_.ClearVertices();
@@ -26,9 +26,9 @@ void Tilemap::BuildRenderers(sf::Vector2f gridOffset) {
     }
 
     if (ressources_tilesheet_.InitTileSheet("_assets/tiles/RTS_medieval@2_no_margins_transparent.png", 128)) {
-        ressources_tilesheet_.AddTile(RessourcesTiles::kWood, 5, 3);
-        ressources_tilesheet_.AddTile(RessourcesTiles::kRock, 5, 4);
-        ressources_tilesheet_.AddTile(RessourcesTiles::kFood, 5, 5);
+        ressources_tilesheet_.AddTile(ResourceTile::kWood, 5, 3);
+        ressources_tilesheet_.AddTile(ResourceTile::kRock, 5, 4);
+        ressources_tilesheet_.AddTile(ResourceTile::kFood, 10, 5);
 
         ressources_renderer_.SetTexture(ressources_tilesheet_.GetTexture());
         ressources_renderer_.ClearVertices();
@@ -40,7 +40,6 @@ void Tilemap::BuildRenderers(sf::Vector2f gridOffset) {
 }
 
 void Tilemap::Setup(sf::Vector2f gridSize, sf::Vector2f gridOffset) {
-    // Génération et stockage dans les membres
     terrain_  = tiles::generator::GenerateTerrain(gridSize, gridOffset);
     resources_ = tiles::generator::SeedAndGrow(terrain_);
 
@@ -58,5 +57,5 @@ void Tilemap::Save(std::filesystem::path path, Saver& saver) {
 
 void Tilemap::Load(std::filesystem::path path, Loader& loader, sf::Vector2f gridOffset) {
     loader.visit(path, *this);
-    BuildRenderers(gridOffset);  // Reconstruit l'affichage depuis les données chargées
+    BuildRenderers(gridOffset);
 }

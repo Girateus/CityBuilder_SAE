@@ -8,7 +8,7 @@
 #include <filesystem>
 #include <vector>
 
-#include "../../api/include/tiles/tile.h"
+#include "tiles/tile.h"
 #include "FastNoiseLite.h"
 #include "game_types.h"
 #include "graphics/tilemap_renderer.h"
@@ -19,18 +19,17 @@ class Saver;
 
 class Tilemap {
   graphics::TilemapRenderer terrain_renderer_;
-  graphics::Tilesheet<TerrainTiles> terrain_tilesheet_;
+  graphics::Tilesheet<TerrainTile> terrain_tilesheet_;
 
   graphics::TilemapRenderer ressources_renderer_;
-  graphics::Tilesheet<RessourcesTiles> ressources_tilesheet_;
+  graphics::Tilesheet<ResourceTile> ressources_tilesheet_;
 
-  std::vector<tiles::Tile<TerrainTiles>> terrain_;
-  std::vector<tiles::Tile<RessourcesTiles>> resources_;
+  std::vector<tiles::Tile<TerrainTile>> terrain_;
+  std::vector<tiles::Tile<ResourceTile>> resources_;
 
   friend class Saver;
   friend class Loader;
 
-  // Reconstruit les vertex buffers depuis terrain_ et resources_
   void BuildRenderers(sf::Vector2f gridOffset);
 
  public:

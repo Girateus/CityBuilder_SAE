@@ -1,5 +1,5 @@
 //
-// ACreated by noahs on 01.06.2026.
+// Created by noahs on 01.06.2026.
 //
 
 #include "saver.h"
@@ -19,6 +19,7 @@ void Saver::visit(std::filesystem::path& path, Tilemap& tilemap) {
     ofs_ << tile.pos.x << ";" << tile.pos.y << ";"
          << static_cast<int>(tile.type) << "\n";
   }
+
 
   for (auto& tile : tilemap.resources_) {
     ofs_ << tile.pos.x << ";" << tile.pos.y << ";"

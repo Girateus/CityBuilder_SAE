@@ -5,7 +5,7 @@
 #ifndef CITYBUILDER_TILEMAP_GENERATOR_H
 #define CITYBUILDER_TILEMAP_GENERATOR_H
 
-#include <__msvc_ranges_to.hpp>
+//#include <__msvc_ranges_to.hpp>
 #include <random>
 #include <ranges>
 #include <span>
@@ -14,9 +14,9 @@
 
 namespace tiles::generator {
 
-inline std::vector<Tile<TerrainTiles>> GenerateTerrain(sf::Vector2f size,
+inline std::vector<Tile<TerrainTile>> GenerateTerrain(sf::Vector2f size,
                                                        sf::Vector2f offset) {
-  std::vector<Tile<TerrainTiles>> terrainMap;
+  std::vector<Tile<TerrainTile>> terrainMap;
 
   FastNoiseLite noise;
   noise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
@@ -28,33 +28,35 @@ inline std::vector<Tile<TerrainTiles>> GenerateTerrain(sf::Vector2f size,
 
       // Generator stuff -----------------------------
       if (abs(noise.GetNoise(x, y)) <= 0.3f) {
-        terrainMap.emplace_back(Tile{{x, y}, TerrainTiles::kGrassA});
+        terrainMap.emplace_back(Tile{{x, y}, TerrainTile::kGrassA});
       } else {
-        terrainMap.emplace_back(Tile{{x, y}, TerrainTiles::kWaterA});
+        terrainMap.emplace_back(Tile{{x, y}, TerrainTile::kWaterA});
       }
     }
   }
   return terrainMap;
 }
 
-inline std::vector<Tile<RessourcesTiles>> SeedAndGrow(
-    std::span<Tile<TerrainTiles>> terrain) {
+inline std::vector<Tile<ResourceTile>> SeedAndGrow(
+    std::span<Tile<TerrainTile>> terrain) {
   std::random_device rd;
   std::mt19937 gen(rd());
   std::uniform_real_distribution rnd(0.f, 1.f);
 
-  const std::vector<std::pair<RessourcesTiles, float>> _seeds = {
-      {RessourcesTiles::kWood, 0.25f},
-      {RessourcesTiles::kRock, 0.15f},
-      {RessourcesTiles::kFood, 0.10f},
+   constexpr std::array<std::pair<ResourceTile, float>, 3> seeds = {
+    {
+      {ResourceTile::kWood, 0.25f},
+      {ResourceTile::kRock, 0.15f},
+      {ResourceTile::kFood, 0.10f},
+  }
   };
 
   auto map = terrain | std::views::filter([](auto tile) {
-               return tile.type == TerrainTiles::kGrassA;
+               return tile.type == TerrainTile::kGrassA;
              }) |
              std::views::transform([&](auto tile) {
-               std::vector<Tile<RessourcesTiles>> result;
-               for (auto& [type, prob] : _seeds) {
+               std::vector<Tile<ResourceTile>> result;
+               for (auto& [type, prob] : seeds) {
                  if (rnd(gen) <= prob) {
                    result.emplace_back(tile.pos, type);
                    break;
@@ -64,7 +66,7 @@ inline std::vector<Tile<RessourcesTiles>> SeedAndGrow(
              }) |
              std::views::join;
 
-  std::vector<Tile<RessourcesTiles>> ressourceMap;
+  std::vector<Tile<ResourceTile>> ressourceMap;
   for (auto tile : map) {
     ressourceMap.emplace_back(tile);
   }
