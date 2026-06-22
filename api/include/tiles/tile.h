@@ -4,18 +4,23 @@
 
 #ifndef CITYBUILDER_TILE_H
 #define CITYBUILDER_TILE_H
-#include <SFML/System/Vector2.hpp>
 #include <type_traits>
+#include <SFML/System/Vector2.hpp>
 
-namespace tiles {
+namespace api::tiles {
 
-template <typename T>
-  requires std::is_enum_v<T>
-struct Tile {
-  sf::Vector2f pos;
+struct BasicTile {
+  sf::Vector2f  Pos;
+  bool IsWalkable = false;
+};
+
+template<typename T>
+requires std::is_enum_v<T>
+struct Tile : BasicTile {
   T type;
 };
 
-}  // namespace tiles
 
-#endif  // CITYBUILDER_TILE_H
+}
+
+#endif //CITYBUILDER_TILE_H

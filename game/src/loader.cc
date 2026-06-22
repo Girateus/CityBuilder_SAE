@@ -30,25 +30,28 @@ void Loader::visit(std::filesystem::path& path, Tilemap& tilemap) {
     tilemap.terrain_.clear();
     tilemap.resources_.clear();
 
-    for (int i = 0; i < terrainCount && std::getline(ifs_, line); ++i) {
-        std::stringstream ts(line);
-        std::getline(ts, field, ';'); float x    = std::stof(field);
-        std::getline(ts, field, ';'); float y    = std::stof(field);
-        std::getline(ts, field, ';'); int   type = std::stoi(field);
+  for (int i = 0; i < terrainCount && std::getline(ifs_, line); ++i) {
+    std::stringstream ts(line);
+    std::getline(ts, field, ';'); float x    = std::stof(field);
+    std::getline(ts, field, ';'); float y    = std::stof(field);
+    std::getline(ts, field, ';'); int   type = std::stoi(field);
 
-        tilemap.terrain_.emplace_back(
-            tiles::Tile<TerrainTile>{{x, y}, static_cast<TerrainTile>(type)});
-    }
+    // ← {{{x,y}, walkable}, type} au lieu de {{x,y}, type}
+    const bool walkable = (static_cast<TerrainTile>(type) == TerrainTile::kGrassA ||
+                           static_cast<TerrainTile>(type) == TerrainTile::kGrassB);
+    tilemap.terrain_.emplace_back(
+        api::tiles::Tile<TerrainTile>{{{x, y}, walkable}, static_cast<TerrainTile>(type)});
+  }
 
-    for (int i = 0; i < resourceCount && std::getline(ifs_, line); ++i) {
-        std::stringstream rs(line);
-        std::getline(rs, field, ';'); float x    = std::stof(field);
-        std::getline(rs, field, ';'); float y    = std::stof(field);
-        std::getline(rs, field, ';'); int   type = std::stoi(field);
+  for (int i = 0; i < resourceCount && std::getline(ifs_, line); ++i) {
+    std::stringstream rs(line);
+    std::getline(rs, field, ';'); float x    = std::stof(field);
+    std::getline(rs, field, ';'); float y    = std::stof(field);
+    std::getline(rs, field, ';'); int   type = std::stoi(field);
 
-        tilemap.resources_.emplace_back(
-            tiles::Tile<ResourceTile>{{x, y}, static_cast<ResourceTile>(type)});
-    }
-
+    // ← ressources jamais walkables
+    tilemap.resources_.emplace_back(
+        api::tiles::Tile<ResourceTile>{{{x, y}, false}, static_cast<ResourceTile>(type)});
+  }
     close();
 }

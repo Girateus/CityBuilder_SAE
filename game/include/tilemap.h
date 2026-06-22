@@ -1,44 +1,48 @@
-﻿//
-// Created by sebas on 20.05.2026.
-//
-
-#ifndef CITYBUILDER_TILEMAP_H
+﻿#ifndef CITYBUILDER_TILEMAP_H
 #define CITYBUILDER_TILEMAP_H
 
 #include <filesystem>
 #include <vector>
 
-#include "tiles/tile.h"
 #include "FastNoiseLite.h"
+#include "ai/a_star_graph.h"
 #include "game_types.h"
 #include "graphics/tilemap_renderer.h"
 #include "graphics/tilesheet.h"
+#include "tiles/tile.h"
 
 class Loader;
 class Saver;
 
 class Tilemap {
-  graphics::TilemapRenderer terrain_renderer_;
-  graphics::Tilesheet<TerrainTile> terrain_tilesheet_;
 
-  graphics::TilemapRenderer ressources_renderer_;
-  graphics::Tilesheet<ResourceTile> ressources_tilesheet_;
+  sf::Vector2i grid_size_;   // prof : Vector2i (nombre de tiles)
+  sf::Vector2f grid_offset_;
 
-  std::vector<tiles::Tile<TerrainTile>> terrain_;
-  std::vector<tiles::Tile<ResourceTile>> resources_;
+  api::graphics::TilemapRenderer terrain_renderer_;
+  api::graphics::Tilesheet<TerrainTile> terrain_tilesheet_;
 
-  friend class Saver;
+  api::graphics::TilemapRenderer ressources_renderer_;
+  api::graphics::Tilesheet<ResourceTile> ressources_tilesheet_;
+
+  std::vector<api::tiles::Tile<TerrainTile>>   terrain_;
+  std::vector<api::tiles::Tile<ResourceTile>>  resources_;
+
+  friend class Saver;   // ta version — pour Save/Load
   friend class Loader;
 
-  void BuildRenderers(sf::Vector2f gridOffset);
+  void BuildRenderers(sf::Vector2f gridOffset, api::ai::AStarGraph& astar_graph);
 
- public:
-  void Setup(sf::Vector2f gridSize, sf::Vector2f gridOffset);
+public:
+  void Setup(sf::Vector2i gridSize, sf::Vector2f gridOffset,
+             api::ai::AStarGraph& astar_graph);
+
   void Draw(sf::RenderWindow& window);
 
+  // Ta version — absente chez le prof mais utile
   void Save(std::filesystem::path path, Saver& saver);
   void Load(std::filesystem::path path, Loader& loader,
-            sf::Vector2f gridOffset);
+            sf::Vector2f gridOffset, api::ai::AStarGraph& astar_graph);
 };
 
 #endif  // CITYBUILDER_TILEMAP_H

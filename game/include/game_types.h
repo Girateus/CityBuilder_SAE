@@ -10,8 +10,6 @@ enum class TerrainTile {
   kGrassB,
   kWaterA,
   kWaterB,
-  kSnowA,
-  kSnowB,
 };
 
 enum class ResourceTile {

@@ -6,6 +6,7 @@ add_library(core INTERFACE
         include/ai/bt_sequence.h
         include/ai/bt_selector.h
         include/ai/bt_composite.h
-        include/ai/bt_node_factory.h)
+        include/ai/bt_node_factory.h
+        include/rng/rng.h)
 
 target_include_directories(core INTERFACE include/)
