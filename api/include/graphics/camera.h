@@ -20,15 +20,18 @@ class Camera {
   float maxZoom_ = 4.f;
   float currentZoom_ = 1.f;
 
- public:
+ private:
+  void Zoom(float factor, sf::Vector2f anchorWorld);
+
+public:
   void Setup(sf::Vector2f windowSize);
   void HandleEvent(const sf::Event &event, const sf::RenderWindow &window);
   void Update(float dt);
   void Apply(sf::RenderWindow &window);
   void OnWindowResized(sf::Vector2u newSize);
+  const sf::View& GetView() const { return view_; }
 
- private:
-  void Zoom(float factor, sf::Vector2f anchorWorld);
+
 };
 }  // namespace graphics
 

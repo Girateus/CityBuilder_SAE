@@ -19,8 +19,8 @@ namespace api::motion {
         [[nodiscard]] const sf::Vector2f &position() const{ return position_; }
 
         void set_speed(float speed){ speed_ = speed; }
-        void set_position(sf::Vector2f position);
-        void set_destination(sf::Vector2f destination);
+        void set_position(sf::Vector2i position);
+        void set_destination(sf::Vector2i destination);
 
     };
 } // namespace api::motion

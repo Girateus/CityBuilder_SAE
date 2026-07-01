@@ -13,6 +13,7 @@
 #include <SFML/System/Vector2.hpp>
 
 #include "a_star_graph.h"
+#include "a_star_path.h"
 #include "ai/bt_action.h"
 #include "ai/bt_node.h"
 #include "motion/motor.h"
@@ -27,6 +28,7 @@ namespace api::ai {
         void Setup (const sf::Texture*, sf::Vector2i, sf::Vector2i, AStarGraph&);
         void Update(float dt);
         void Draw(sf::RenderWindow &window);
+        [[nodiscard]] sf::Vector2f Position() const;
 
         Npc() = default;
         ~Npc() = default;
@@ -69,7 +71,7 @@ namespace api::ai {
         std::unique_ptr<core::ai::behaviour_tree::Node> bt_root_;
 
         AStarGraph* astar_graph_;
-        std::vector<sf::Vector2i> path_;
+        AStarPath path_;
         size_t path_idx_ = 0;
 
     };

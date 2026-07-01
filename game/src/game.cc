@@ -1,22 +1,26 @@
-﻿#include "game.h"
+﻿#include <optional>
+#include "game.h"
+
 
 #include <filesystem>
-#include <optional>
+
 
 #include "SFML/Graphics.hpp"
+
 #include "ai/a_star_graph.h"
 #include "ai/npc.h"
+#include "ai/npc_manager.h"
 #include "graphics/camera.h"
-#include "graphics/tilemap_renderer.h"
-#include "graphics/tilesheet.h"
-#include "tilemap.h"
-#include "saver.h"
 #include "loader.h"
+#include "saver.h"
+#include "tilemap.h"
+#include "ui/button_maker.h"
+//#include "ui/ui_manager.h"
 
 namespace game {
 namespace {
-constexpr sf::Vector2i grid_size   = {1920 * 5 / 32, 1080 * 5 / 32}; // en tiles
-constexpr sf::Vector2f grid_offset = {32.f, 32.f};
+constexpr sf::Vector2i world_size   = {1920 *2 / 32, 1080 *2 / 32};
+constexpr sf::Vector2i world_offset = {32, 32};
 constexpr sf::Vector2f window_size_f = {1920.f, 1080.f};
 constexpr sf::Vector2u window_size_u = {1920u, 1080u};
 
@@ -24,43 +28,48 @@ sf::Clock        clock_;
 sf::RenderWindow window_;
 bool             isFullscreen_ = false;
 
-// AStarGraph construit en même temps que la tilemap dans Setup()
-api::ai::AStarGraph astar_graph_{grid_size, sf::Vector2i{grid_offset}};
-
 Tilemap          map_;
+Saver saver;
 graphics::Camera camera_;
+api::ai::NPCManager npc_manager_;
+// AStarGraph construit en même temps que la tilemap dans Setup()
+api::ai::AStarGraph astar_graph_{world_size, world_offset};
 
-sf::Texture      npc_texture_;
-api::ai::Npc     npc_;
+//api::ui::ui_manager ui_manager_;
 
 void Setup() {
     window_.create(sf::VideoMode(window_size_u), "SFML window", sf::Style::Default);
     camera_.Setup(window_size_f);
 
     // Setup remplit astar_graph_ en même temps qu'il génère le terrain
-    map_.Setup(grid_size, grid_offset, astar_graph_);
+  map_.Setup(world_size, {world_offset.x, world_offset.y}, astar_graph_);
+
+  /*ui_manager_.InitTextures("");
+  ui_manager_.InitLabelStyle("");*/
+
+  //api::ui::ButtonBuilder
 
   const std::filesystem::path save_path = "save/map.sav";
 
   if (std::filesystem::exists(save_path)) {
     // Recrée le graphe vide avant de le reremplir via Load
-    astar_graph_ = api::ai::AStarGraph{grid_size, sf::Vector2i{grid_offset}};
+    astar_graph_ = api::ai::AStarGraph{world_size, world_offset};
 
     Loader loader;
-    map_.Load(save_path, loader, grid_offset, astar_graph_);
+    //converti Vector2i de world_offset en Vector2f
+    map_.Load(save_path, loader, static_cast<sf::Vector2f>(world_offset), astar_graph_);
   } else {
-    map_.Setup(grid_size, grid_offset, astar_graph_);
 
     std::filesystem::create_directories(save_path.parent_path());
-    Saver saver;
+
     map_.Save(save_path, saver);
   }
 
-    // Texture chargée ici, pointeur passé au NPC
-    npc_texture_.loadFromFile(
-        "_assets/Assets_Game_prog_Carusone_Matheo_2025_10_22/collecteur-de-pierre.png");
+    npc_manager_.Setup("_assets/Assets_Game_prog_Carusone_Matheo_2025_10_22/collecteur-de-bois.png", world_size);
 
-    npc_.Setup(&npc_texture_, grid_size, {100, 100}, astar_graph_);
+  for (int i = 0; i < 500; ++i) {
+    npc_manager_.SpawnNPC(astar_graph_);
+  }
 }
 
 void ToggleFullscreen() {
@@ -91,16 +100,24 @@ void Loop() {
                     continue;
                 }
             }
+
+            if (const auto* key = event->getIf<sf::Event::KeyPressed>()) {
+              if (key->code == sf::Keyboard::Key::Escape) {
+                // TODO : implement save when closing game
+                //map_.Save(save_path, saver);
+                window_.close();
+              }
+            }
             camera_.HandleEvent(*event, window_);
         }
 
         camera_.Update(dt);
         camera_.Apply(window_);
-        npc_.Update(dt);
+        npc_manager_.Update(dt);
 
         window_.clear();
         map_.Draw(window_);
-        npc_.Draw(window_);
+        npc_manager_.Draw(window_);
         window_.display();
     }
 }

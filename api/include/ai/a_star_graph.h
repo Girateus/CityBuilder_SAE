@@ -1,69 +1,63 @@
 //
-// Created by noahs on 17.06.2026.
+// Created by sebas on 11.06.2026.
 //
 
 #ifndef CITYBUILDER_PATH_H
 #define CITYBUILDER_PATH_H
 
 #include <array>
+#include <bit>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 #include <SFML/System/Vector2.hpp>
 
-namespace api::ai {
+#include "utils/sf_utils.h"
 
-    // TODO : Slide about hash and unordered_set
-    struct Vec2iHash {
-        size_t operator()(const sf::Vector2i& node) const noexcept{
-            size_t h = std::hash<int>{}(node.x);
-            h ^= std::hash<int>{}(node.y) + 0x9e3779b9 + (h << 6) + (h >> 2);
-            return h;
-        }
-    };
-    //
-    // // TODO : Slide about hash and unordered_set
-    // struct Vec2iEq {
-    //     bool operator()(const sf::Vector2i& a,const sf::Vector2i& b) const noexcept{return a.x == b.x && a.y == b.y;}
-    // };
+namespace api::ai {
 
     struct AStarVertex {
         sf::Vector2i position = sf::Vector2i(-1, -1);
         int g = 0; // Dijkstra cost
         int h = 0; // Heuristic value
-        // AStarVertex* parent = nullptr;
-        int parent_idx = -1;
+        // Position we reached this vertex from; recorded into the came_from map when settled.
+        sf::Vector2i parent_position = sf::Vector2i(-1, -1);
 
         [[nodiscard]] int F() const{return g + h;};
 
-        bool operator>(const AStarVertex& other) const{return F() > other.F();};
-        bool operator==(const AStarVertex &other) const{return position == other.position && F() == other.F();};
+        // Ordering for the open-queue (min-heap via std::greater).
+        //bool operator>(const AStarVertex& other) const{return F() > other.F();};
 
-        struct AStarVertexHash {
-            size_t operator()(const AStarVertex& vertex) const noexcept{
-                return Vec2iHash{}(vertex.position);
-            }
-        };
+    };
 
+    struct VxCompareByF {
+        bool operator()(AStarVertex a, AStarVertex b)
+        {
+            return a.F() < b.F();
+        }
     };
 
     class AStarGraph {
 
-        // TODO : Slide about hash
-        std::unordered_set<sf::Vector2i, Vec2iHash> walkables_;
-        std::vector<AStarVertex> visited_vertices;
+        std::unordered_set<sf::Vector2i, core::utils::Vec2iHash> walkables_;
         sf::Vector2i world_offset_;
+
+        // Scratch reused across GetPath calls: doubles as the closed set (key = settled)
+        // and the reverse parent chain (value = parent). mutable so the const GetPath can
+        // clear and fill it; clear() keeps capacity, so steady-state pathing reallocates nothing.
+        mutable std::unordered_map<sf::Vector2i, sf::Vector2i, core::utils::Vec2iHash> came_from_;
 
     public:
         explicit AStarGraph(sf::Vector2i world_size, sf::Vector2i world_offset) : world_offset_(world_offset){
-            visited_vertices.reserve(world_size.x * world_size.y);
         };
 
         void AddNode(sf::Vector2i node);
         void RemoveNode(sf::Vector2i node);
         [[nodiscard]] bool ContainsNode(sf::Vector2i node) const;
-        const sf::Vector2i GetRandomNode();
 
-        std::vector<sf::Vector2i> GetPath(sf::Vector2i start, sf::Vector2i end);
+        sf::Vector2i GetRandomNode();
+
+        [[nodiscard]] std::vector<sf::Vector2i> GetPath(sf::Vector2i start, sf::Vector2i end) const;
 
     };
 
@@ -80,4 +74,3 @@ namespace api::ai {
 
 }
 #endif //CITYBUILDER_PATH_H
-

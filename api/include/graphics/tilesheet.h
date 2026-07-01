@@ -36,10 +36,13 @@ public:
   }
 
   sf::FloatRect GetBounds(T type){
-    if (tile_rects.contains(type)) {
+
+    auto it = tile_rects.find(type);
+    return it != tile_rects.end() ? it->second : sf::FloatRect{};
+   /* if (tile_rects.contains(type)) {
       return tile_rects.at(type);
     }
-    return {};
+    return {};*/
   }
 };
 } // namespace graphics

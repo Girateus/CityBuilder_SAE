@@ -16,7 +16,7 @@ class Saver;
 
 class Tilemap {
 
-  sf::Vector2i grid_size_;   // prof : Vector2i (nombre de tiles)
+  sf::Vector2i grid_size_;
   sf::Vector2f grid_offset_;
 
   api::graphics::TilemapRenderer terrain_renderer_;
@@ -28,7 +28,7 @@ class Tilemap {
   std::vector<api::tiles::Tile<TerrainTile>>   terrain_;
   std::vector<api::tiles::Tile<ResourceTile>>  resources_;
 
-  friend class Saver;   // ta version — pour Save/Load
+  friend class Saver;
   friend class Loader;
 
   void BuildRenderers(sf::Vector2f gridOffset, api::ai::AStarGraph& astar_graph);
@@ -39,7 +39,6 @@ public:
 
   void Draw(sf::RenderWindow& window);
 
-  // Ta version — absente chez le prof mais utile
   void Save(std::filesystem::path path, Saver& saver);
   void Load(std::filesystem::path path, Loader& loader,
             sf::Vector2f gridOffset, api::ai::AStarGraph& astar_graph);

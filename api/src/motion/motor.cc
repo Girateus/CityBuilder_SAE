@@ -17,13 +17,13 @@ namespace api::motion {
         position_ += distance.normalized() * speed_ * dt;
     }
 
-    void Motor::set_position(sf::Vector2f position){
-        position_ = position;
+    void Motor::set_position(sf::Vector2i position){
+        position_ = sf::Vector2f(position);
         remainingDistance_ = (destination_ - position_).length();
     }
 
-    void Motor::set_destination(sf::Vector2f destination){
-        destination_ = destination;
+    void Motor::set_destination(sf::Vector2i destination){
+        destination_ = sf::Vector2f(destination);
         remainingDistance_ = (destination_ - position_).length();
     }
 }

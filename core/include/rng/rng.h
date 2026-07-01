@@ -13,7 +13,7 @@ template<typename T>
 requires std::is_floating_point_v<T>
 T get_value(T min, T max){
   std::uniform_real_distribution<T> dist(min, max);
-  std::mt19937 rng_{std::random_device{}()};
+  static std::mt19937 rng_{std::random_device{}()};
   return dist(rng_);
 }
 
@@ -21,7 +21,7 @@ template<typename T>
 requires std::is_integral_v<T>
 T get_value(T min, T max){
   std::uniform_int_distribution<T> dist(min, max);
-  std::mt19937 rng_{std::random_device{}()};
+  static std::mt19937 rng_{std::random_device{}()};
   return dist(rng_);
 }
 

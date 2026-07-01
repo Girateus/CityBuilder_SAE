@@ -21,23 +21,22 @@ namespace api::ai {
 
         if (texture != nullptr) {
             sprite_ = sf::Sprite(*texture);
-          // ← REMPLACE sprite_->setOrigin({16,16})
           const sf::Vector2u textureSize = texture->getSize();
           sprite_->setScale({
               32.f / static_cast<float>(textureSize.x),
               32.f / static_cast<float>(textureSize.y)
           });
-          // Centre l'origine sur le sprite déjà scalé
-          sprite_->setOrigin({
+
+          /*sprite_->setOrigin({
               static_cast<float>(textureSize.x) / 2.f,
               static_cast<float>(textureSize.y) / 2.f
-          });
+          });*/
         }
 
-        sf::Vector2f start_position_f = sf::Vector2f{static_cast<float>(start_position.x), static_cast<float>(start_position.y)};
+        //sf::Vector2f start_position_f = sf::Vector2f{static_cast<float>(start_position.x), static_cast<float>(start_position.y)};
 
-        motor_.set_position(start_position_f);
-        motor_.set_destination(start_position_f); // stay put until the first pick
+        motor_.set_position(start_position);
+        motor_.set_destination(start_position); // stay put until the first pick
         motor_.set_speed(kSpeed);
 
         using namespace core::ai::behaviour_tree::node_factory;
@@ -87,39 +86,39 @@ namespace api::ai {
         }
     }
 
+    sf::Vector2f Npc::Position() const {
+      return motor_.position();
+    }
+
     Status Npc::WaitForPath(){
         return Status::kSuccess;
     }
 
     Status Npc::PickRandomDestination(){
-        // core::rng::get_value<long long>(0, walkable_tiles_.extent(0) * walkable_tiles_.extent(1));
-        // get the path
-        sf::Vector2i destination = astar_graph_->GetRandomNode();
-        if (ManhattanDistance(sf::Vector2i{motor_.position()}, destination) > 200) {
-            return Status::kFailure;
-        }
-        path_ = astar_graph_->GetPath(sf::Vector2i{motor_.position()}, destination);
-
-        if (!path_.empty()) {
-            path_idx_ = 0;
-            motor_.set_destination(sf::Vector2f{path_[path_idx_]});
-            return Status::kSuccess;
-        }
+      // core::rng::get_value<long long>(0, walkable_tiles_.extent(0) * walkable_tiles_.extent(1));
+      // get the path
+      sf::Vector2i destination = astar_graph_->GetRandomNode();
+      if (ManhattanDistance(sf::Vector2i{motor_.position()}, destination) > 200) {
+        return Status::kFailure;
+      }
+      path_.SetPath(astar_graph_->GetPath(sf::Vector2i{motor_.position()}, destination));
+      if (path_.IsValid()) {
+        path_.NextPosition();
+        motor_.set_destination(path_.CurrentPosition());
+        return Status::kSuccess;
+      }
 
         return Status::kFailure;
     }
 
     Status Npc::MoveToDestination(){
-        // on parcourt case par case, waypoints
-        // TODO : path increment
-        if (motor_.remaining_distance() <= 0.001f) {
-            path_idx_++;
-            if (path_idx_ >= path_.size()) {
-                return Status::kSuccess;
-            } else {
-                motor_.set_destination(sf::Vector2f{path_[path_idx_]});
-            }
+      if (motor_.remaining_distance() <= 0.001f) {
+        if (path_.IsGoalReached()) {
+          return Status::kSuccess;
         }
+        path_.NextPosition();
+        motor_.set_destination(path_.CurrentPosition());
+      }
 
         return Status::kRunning;
     }

@@ -8,6 +8,8 @@
 enum class TerrainTile {
   kGrassA,
   kGrassB,
+  kGrassC,
+  kGrassD,
   kWaterA,
   kWaterB,
 };
@@ -16,6 +18,12 @@ enum class ResourceTile {
   kWood,
   kRock,
   kFood
+};
+
+enum class HouseTile {
+  kLumberjack,
+  kGatherer,
+  kMiner,
 };
 
 #endif  // CITYBUILDER_GAME_TYPES_H

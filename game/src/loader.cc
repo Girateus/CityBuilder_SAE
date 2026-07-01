@@ -37,8 +37,8 @@ void Loader::visit(std::filesystem::path& path, Tilemap& tilemap) {
     std::getline(ts, field, ';'); int   type = std::stoi(field);
 
     // ← {{{x,y}, walkable}, type} au lieu de {{x,y}, type}
-    const bool walkable = (static_cast<TerrainTile>(type) == TerrainTile::kGrassA ||
-                           static_cast<TerrainTile>(type) == TerrainTile::kGrassB);
+    const auto t = static_cast<TerrainTile>(type);
+    const bool walkable = (t == TerrainTile::kGrassA || t == TerrainTile::kGrassB || t == TerrainTile::kGrassC || t == TerrainTile::kGrassD);
     tilemap.terrain_.emplace_back(
         api::tiles::Tile<TerrainTile>{{{x, y}, walkable}, static_cast<TerrainTile>(type)});
   }
