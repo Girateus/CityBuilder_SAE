@@ -43,6 +43,14 @@ void Tilemap::BuildRenderers(sf::Vector2f gridOffset, api::ai::AStarGraph& astar
             ressources_renderer_.AddTile(tile.Pos, gridOffset, ressources_tilesheet_.GetBounds(tile.type));
         }
     }
+
+    if (house_tilesheet_.InitTileSheet("_assets/tiles/tilesheet.png", 240)) {
+      house_tilesheet_.AddTile(HouseTile::kGatherer, 2, 3);
+      house_tilesheet_.AddTile(HouseTile::kMiner, 0, 3);
+      house_tilesheet_.AddTile(HouseTile::kLumberjack, 1, 3);
+
+      house_renderer_.SetTexture(house_tilesheet_.GetTexture());
+    }
 }
 
 void Tilemap::Setup(sf::Vector2i gridSize, sf::Vector2f gridOffset, api::ai::AStarGraph& astar_graph) {
@@ -55,9 +63,33 @@ void Tilemap::Setup(sf::Vector2i gridSize, sf::Vector2f gridOffset, api::ai::ASt
     BuildRenderers(grid_offset_, astar_graph);
 }
 
+bool Tilemap::IsWalkable(sf::Vector2f world_pos) const {
+  for (auto& tile : terrain_) {
+    if (tile.Pos.x == std::floor(world_pos.x / grid_offset_.x) * grid_offset_.x &&
+        tile.Pos.y == std::floor(world_pos.y / grid_offset_.y) * grid_offset_.y) {
+      return tile.IsWalkable;
+        }
+  }
+  return false;
+}
+
+void Tilemap::PlaceHouse(sf::Vector2f world_pos, HouseTile type) {
+  const float tx = std::floor(world_pos.x / grid_offset_.x) * grid_offset_.x;
+  const float ty = std::floor(world_pos.y / grid_offset_.y) * grid_offset_.y;
+
+  houses_.emplace_back(api::tiles::Tile<HouseTile>{{{tx, ty}, false}, type});
+
+  // Rebuild house renderer
+  house_renderer_.ClearVertices();
+  for (auto& h : houses_) {
+    house_renderer_.AddTile(h.Pos, grid_offset_, house_tilesheet_.GetBounds(h.type));
+  }
+}
+
 void Tilemap::Draw(sf::RenderWindow& window) {
     terrain_renderer_.Draw(window);
     ressources_renderer_.Draw(window);
+    house_renderer_.Draw(window);
 }
 
 void Tilemap::Save(std::filesystem::path path, Saver& saver) {

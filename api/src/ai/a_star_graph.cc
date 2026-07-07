@@ -14,11 +14,19 @@
 
 namespace api::ai {
     void AStarGraph::AddNode(sf::Vector2i node){
-        walkables_.emplace(node);
+      if (walkables_.emplace(node).second) {
+        walkables_vec_.push_back(node);
+      }
     }
 
     void AStarGraph::RemoveNode(const sf::Vector2i node){
-        walkables_.erase(node);
+      if (walkables_.erase(node)) {
+        auto it = std::ranges::find(walkables_vec_, node);
+        if (it != walkables_vec_.end()) {
+          *it = walkables_vec_.back();
+          walkables_vec_.pop_back();
+        }
+      }
     }
 
     bool AStarGraph::ContainsNode(const sf::Vector2i node) const{
@@ -26,10 +34,9 @@ namespace api::ai {
     }
 
     sf::Vector2i AStarGraph::GetRandomNode(){
-        size_t rnd_idx = core::rng::get_value(static_cast<size_t>(0), walkables_.size() - 1);
-        // Accessing third element
-        auto it = next(walkables_.begin(), rnd_idx);
-        return {it->x, it->y};
+      const size_t rnd_idx = core::rng::get_value(
+     static_cast<size_t>(0), walkables_vec_.size() - 1);
+      return walkables_vec_[rnd_idx];
     }
 
     std::vector<sf::Vector2i> AStarGraph::GetPath(sf::Vector2i start, sf::Vector2i end) const{

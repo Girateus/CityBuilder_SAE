@@ -25,17 +25,26 @@ class Tilemap {
   api::graphics::TilemapRenderer ressources_renderer_;
   api::graphics::Tilesheet<ResourceTile> ressources_tilesheet_;
 
+  api::graphics::TilemapRenderer house_renderer_;
+  api::graphics::Tilesheet<HouseTile> house_tilesheet_;
+
   std::vector<api::tiles::Tile<TerrainTile>>   terrain_;
   std::vector<api::tiles::Tile<ResourceTile>>  resources_;
+  std::vector<api::tiles::Tile<HouseTile>>     houses_;
 
   friend class Saver;
   friend class Loader;
 
   void BuildRenderers(sf::Vector2f gridOffset, api::ai::AStarGraph& astar_graph);
 
+
+
 public:
   void Setup(sf::Vector2i gridSize, sf::Vector2f gridOffset,
              api::ai::AStarGraph& astar_graph);
+
+  bool IsWalkable(sf::Vector2f world_pos) const;
+  void PlaceHouse(sf::Vector2f world_pos, HouseTile type);
 
   void Draw(sf::RenderWindow& window);
 

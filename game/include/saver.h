@@ -13,6 +13,7 @@
 class Saver : public SerializerVisitor {
   std::ofstream ofs_;
 
+
   void open(std::filesystem::path& path) override;
   void close() override;
 
