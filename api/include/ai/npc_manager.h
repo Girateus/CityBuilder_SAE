@@ -11,20 +11,27 @@
 #include "a_star_graph.h"
 #include "npc.h"
 #include "tiles/tile.h"
+//#include "game_types.h"
+#include "houses/house_type.h"
 
 namespace api::ai {
 class NPCManager {
 
   std::vector<std::unique_ptr<Npc>> npcs_;
   sf::Vector2i world_size_;
-  std::string sprite_path_;
-  std::unique_ptr<sf::Texture> texture_ = std::make_unique<sf::Texture>();
+
+  std::unique_ptr<sf::Texture> texture_lumberjack_ = std::make_unique<sf::Texture>();
+  std::unique_ptr<sf::Texture> texture_gatherer_   = std::make_unique<sf::Texture>();
+  std::unique_ptr<sf::Texture> texture_miner_      = std::make_unique<sf::Texture>();
 
 public:
-  void Setup(std::string_view, sf::Vector2i);
+  void Setup(std::string_view lumberjack_path,
+               std::string_view gatherer_path,
+               std::string_view miner_path,
+               sf::Vector2i world_size);
   void Update(float dt);
   void Draw(sf::RenderWindow &window);
-  void SpawnNPC(AStarGraph& graph);
+  void SpawnNPC(AStarGraph& graph, HouseTile type, sf::Vector2f house_pos);
 };
 }
 

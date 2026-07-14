@@ -8,6 +8,7 @@ add_library(core INTERFACE
         include/ai/bt_composite.h
         include/ai/bt_node_factory.h
         include/rng/rng.h
-        include/utils/sf_utils.h)
+        include/utils/sf_utils.h
+        include/houses/house_type.h)
 
 target_include_directories(core INTERFACE include/)

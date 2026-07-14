@@ -48,7 +48,7 @@ namespace api::ai {
         // Scratch reused across GetPath calls: doubles as the closed set (key = settled)
         // and the reverse parent chain (value = parent). mutable so the const GetPath can
         // clear and fill it; clear() keeps capacity, so steady-state pathing reallocates nothing.
-        mutable std::unordered_map<sf::Vector2i, sf::Vector2i, core::utils::Vec2iHash> came_from_;
+        mutable std::unordered_map<sf::Vector2i, sf::Vector2i, core::utils::Vec2iHash> came_from_; //mutable pas bien
 
 
 

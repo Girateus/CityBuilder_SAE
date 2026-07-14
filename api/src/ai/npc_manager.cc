@@ -10,13 +10,14 @@
 #include "rng/rng.h"
 
 namespace api::ai {
-void NPCManager::Setup(std::string_view sprite_path, sf::Vector2i world_size){
+void NPCManager::Setup(std::string_view lumberjack_path,
+                       std::string_view gatherer_path,
+                       std::string_view miner_path,
+                       sf::Vector2i world_size) {
   world_size_ = world_size;
-  sprite_path_ = sprite_path;
-  if (texture_->loadFromFile(std::string(sprite_path))) {
-  }
-  //npcs_.reserve(10);
-
+  texture_lumberjack_->loadFromFile(std::string(lumberjack_path));
+  texture_gatherer_->loadFromFile(std::string(gatherer_path));
+  texture_miner_->loadFromFile(std::string(miner_path));
 }
 
 void NPCManager::Update(float dt){
@@ -31,8 +32,22 @@ void NPCManager::Draw(sf::RenderWindow &window){
   }
 }
 
-void NPCManager::SpawnNPC(AStarGraph& graph){
+void NPCManager::SpawnNPC(AStarGraph& graph, HouseTile type, sf::Vector2f house_pos) {
+  sf::Texture* tex = nullptr;
+  switch (type) {
+    case HouseTile::kLumberjack: tex = texture_lumberjack_.get(); break;
+    case HouseTile::kGatherer:   tex = texture_gatherer_.get();   break;
+    case HouseTile::kMiner:      tex = texture_miner_.get();      break;
+  }
+
+  if (!tex) return;
+
+  const sf::Vector2i start{
+    static_cast<int>(house_pos.x),
+    static_cast<int>(house_pos.y)
+};
+
   npcs_.emplace_back(std::make_unique<Npc>());
-  npcs_.back()->Setup(texture_.get(), world_size_, graph.GetRandomNode(), graph);
+  npcs_.back()->Setup(tex, world_size_, start, graph);
 }
 }

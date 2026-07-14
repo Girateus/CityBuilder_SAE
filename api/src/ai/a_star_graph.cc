@@ -14,7 +14,8 @@
 
 namespace api::ai {
     void AStarGraph::AddNode(sf::Vector2i node){
-      if (walkables_.emplace(node).second) {
+      auto [_,was_inserted] = walkables_.emplace(node);
+      if (was_inserted) {
         walkables_vec_.push_back(node);
       }
     }

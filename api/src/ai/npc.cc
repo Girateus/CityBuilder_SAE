@@ -98,7 +98,7 @@ namespace api::ai {
       // core::rng::get_value<long long>(0, walkable_tiles_.extent(0) * walkable_tiles_.extent(1));
       // get the path
       sf::Vector2i destination = astar_graph_->GetRandomNode();
-      if (ManhattanDistance(sf::Vector2i{motor_.position()}, destination) > 200) {
+      if (ManhattanDistance(sf::Vector2i{motor_.position()}, destination) > 2000) {
         return Status::kFailure;
       }
       path_.SetPath(astar_graph_->GetPath(sf::Vector2i{motor_.position()}, destination));

@@ -5,6 +5,8 @@
 #ifndef CITYBUILDER_GAME_TYPES_H
 #define CITYBUILDER_GAME_TYPES_H
 
+#include "houses/house_type.h"
+
 enum class TerrainTile {
   kGrassA,
   kGrassB,
@@ -20,10 +22,10 @@ enum class ResourceTile {
   kFood
 };
 
-enum class HouseTile {
+/*enum class HouseTile {
   kLumberjack,
   kGatherer,
   kMiner,
-};
+};*/
 
 #endif  // CITYBUILDER_GAME_TYPES_H

@@ -20,6 +20,7 @@ namespace api::ui {
       friend class ButtonMaker;
       static constexpr sf::FloatRect kNoTiling = { {-1, -1 }, {-1, -1}};
       static constexpr sf::Color kColor = sf::Color::White;
+      const sf::Texture* override_texture_ = nullptr;
 
       sf::Vector2f vertex_size_;
       std::array<sf::Vertex, 6> vertices_;
@@ -53,6 +54,8 @@ namespace api::ui {
 
         void SetVisible(bool v) { visible_ = v; }
         bool IsVisible()  const { return visible_; }
+        void SetTexture(const sf::Texture* tex) { override_texture_ = tex; }
+        const sf::Texture* GetTexture() const { return override_texture_; }
     };
 }
 

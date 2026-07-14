@@ -45,6 +45,7 @@ void PlaceHouse(sf::Vector2f world_pos) {
     if (!selected_house_) return;
     if (!IsPlaceable(world_pos)) return;
     map_.PlaceHouse(world_pos, *selected_house_);
+    npc_manager_.SpawnNPC(astar_graph_, *selected_house_, world_pos);
     selected_house_ = std::nullopt;
 }
 
@@ -145,12 +146,14 @@ void Setup() {
     }
 
     npc_manager_.Setup(
-        "_assets/Assets_Game_prog_Carusone_Matheo_2025_10_22/collecteur-de-bois.png",
-        world_size);
+    "_assets/Assets_Game_prog_Carusone_Matheo_2025_10_22/collecteur-de-bois.png",    // lumberjack
+    "_assets/Assets_Game_prog_Carusone_Matheo_2025_10_22/collecteur-de-nouriture.png",  // gatherer
+    "_assets/Assets_Game_prog_Carusone_Matheo_2025_10_22/collecteur-de-pierre.png",  // miner ← adapter
+    world_size);
 
-    for (int i = 0; i < 500; ++i) {
+    /*for (int i = 0; i < 500; ++i) {
         npc_manager_.SpawnNPC(astar_graph_);
-    }
+    }*/
 
     // UI
     ui_manager_.InitTextures("_assets/UI/");
