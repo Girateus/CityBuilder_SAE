@@ -6,6 +6,7 @@
 #define CITYBUILDER_GAME_TYPES_H
 
 #include "houses/house_type.h"
+#include "resources/resource_type.h"
 
 enum class TerrainTile {
   kGrassA,
@@ -16,11 +17,11 @@ enum class TerrainTile {
   kWaterB,
 };
 
-enum class ResourceTile {
+/*enum class ResourceTile {
   kWood,
   kRock,
   kFood
-};
+};*/
 
 /*enum class HouseTile {
   kLumberjack,

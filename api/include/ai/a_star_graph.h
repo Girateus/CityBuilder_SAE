@@ -40,7 +40,7 @@ namespace api::ai {
     };
 
     class AStarGraph {
-
+        //TODO change to std::map with index
         std::unordered_set<sf::Vector2i, core::utils::Vec2iHash> walkables_;
         std::vector<sf::Vector2i> walkables_vec_;
         sf::Vector2i world_offset_;

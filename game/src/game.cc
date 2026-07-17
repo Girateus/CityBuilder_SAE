@@ -42,11 +42,28 @@ bool IsPlaceable(sf::Vector2f world_pos) {
 }
 
 void PlaceHouse(sf::Vector2f world_pos) {
-    if (!selected_house_) return;
-    if (!IsPlaceable(world_pos)) return;
-    map_.PlaceHouse(world_pos, *selected_house_);
-    npc_manager_.SpawnNPC(astar_graph_, *selected_house_, world_pos);
-    selected_house_ = std::nullopt;
+  if (!selected_house_) return;
+
+  // ← Snapper sur la grille
+  constexpr float kOffset = 32.f;
+  world_pos.x = std::floor(world_pos.x / kOffset) * kOffset;
+  world_pos.y = std::floor(world_pos.y / kOffset) * kOffset;
+
+  if (!IsPlaceable(world_pos)) return;
+
+  map_.PlaceHouse(world_pos, *selected_house_);
+  npc_manager_.SpawnNPC(  astar_graph_, *selected_house_,
+    world_pos,[&](sf::Vector2f pos, ResourceTile type) {
+      return map_.ReserveNearestResource(pos, type); // ← réserve au lieu de juste chercher
+  },
+  [&](sf::Vector2f pos) {
+      map_.RemoveResource(pos, astar_graph_); // ← passe le graph pour réajouter le nœud
+  },
+  [&](sf::Vector2f pos) {
+      map_.UnreserveResource(pos); // ← nouveau callback
+  }
+  );
+  selected_house_ = std::nullopt;
 }
 
 void CloseMenu() {
@@ -158,16 +175,15 @@ void Setup() {
     // UI
     ui_manager_.InitTextures("_assets/UI/");
 
-    ui_manager_.InitLabelStyle("_assets/UI/ta_police.ttf");
     BuildUI();
 }
 
 void ToggleFullscreen() {
     isFullscreen_ = !isFullscreen_;
     if (isFullscreen_) {
-        window_.create(sf::VideoMode::getDesktopMode(), "SFML window", sf::State::Fullscreen);
+        window_.create(sf::VideoMode::getDesktopMode(), "RoboBuilder", sf::State::Fullscreen);
     } else {
-        window_.create(sf::VideoMode(window_size_u), "SFML window", sf::Style::Default);
+        window_.create(sf::VideoMode(window_size_u), "RoboBuilder", sf::Style::Default);
     }
     camera_.OnWindowResized(window_.getSize());
 }
@@ -201,7 +217,6 @@ void Loop() {
                 }
             }
 
-            // Clic gauche : placement si maison sélectionnée, sinon UI
             if (selected_house_.has_value()) {
                 if (const auto* click = event->getIf<sf::Event::MouseButtonPressed>()) {
                     if (click->button == sf::Mouse::Button::Left) {
@@ -217,7 +232,6 @@ void Loop() {
             camera_.HandleEvent(*event, window_);
         }
 
-        // Preview qui suit la souris quand une maison est sélectionnée
         if (selected_house_.has_value()) {
             const sf::Vector2f world_pos =
                 window_.mapPixelToCoords(sf::Mouse::getPosition(window_));

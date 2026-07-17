@@ -3,6 +3,8 @@
 //
 #include "tilemap.h"
 
+#include <print>
+
 #include "ai/a_star_graph.h"
 #include "game_types.h"
 #include "loader.h"
@@ -83,6 +85,85 @@ void Tilemap::PlaceHouse(sf::Vector2f world_pos, HouseTile type) {
   house_renderer_.ClearVertices();
   for (auto& h : houses_) {
     house_renderer_.AddTile(h.Pos, grid_offset_, house_tilesheet_.GetBounds(h.type));
+  }
+}
+
+std::optional<sf::Vector2f> Tilemap::GetNearestResource(
+    sf::Vector2f from, ResourceTile type) const
+{
+  std::optional<sf::Vector2f> best;
+  float best_dist = std::numeric_limits<float>::max();
+
+  for (auto& tile : resources_) {
+    if (tile.type != type) continue;
+    const float dx = tile.Pos.x - from.x;
+    const float dy = tile.Pos.y - from.y;
+    const float dist = dx * dx + dy * dy;
+    if (dist < best_dist) {
+      best_dist = dist;
+      best = tile.Pos;
+    }
+  }
+  return best;
+}
+
+std::optional<sf::Vector2f> Tilemap::ReserveNearestResource(
+    sf::Vector2f from, ResourceTile type)
+{
+  float best_dist = std::numeric_limits<float>::max();
+  int   best_idx  = -1;
+
+  for (int i = 0; i < static_cast<int>(resources_.size()); ++i) {
+    auto& tile = resources_[i];
+    if (tile.type != type) continue;
+
+    // On vérifie par position (paire X, Y) plutôt que par index
+    if (reserved_resources_.contains({tile.Pos.x, tile.Pos.y})) continue;
+
+    const float dx = tile.Pos.x - from.x;
+    const float dy = tile.Pos.y - from.y;
+    const float dist = dx * dx + dy * dy;
+
+    if (dist < best_dist) {
+      best_dist = dist;
+      best_idx  = i;
+    }
+  }
+
+  if (best_idx == -1) return std::nullopt;
+
+  // On réserve la position
+  auto& best_tile = resources_[best_idx];
+  reserved_resources_.insert({best_tile.Pos.x, best_tile.Pos.y});
+  return best_tile.Pos;
+}
+
+void Tilemap::UnreserveResource(sf::Vector2f pos) {
+  // Plus besoin de boucler sur tout le vecteur ! C'est instantané.
+  reserved_resources_.erase({pos.x, pos.y});
+}
+
+void Tilemap::RemoveResource(sf::Vector2f pos, api::ai::AStarGraph& graph) {
+  for (int i = 0; i < static_cast<int>(resources_.size()); ++i) {
+    if (resources_[i].Pos.x == pos.x && resources_[i].Pos.y == pos.y) {
+
+      // On efface par la position, le décalage du vecteur n'impacte plus rien
+      reserved_resources_.erase({pos.x, pos.y});
+      resources_.erase(resources_.begin() + i);
+
+      graph.AddNode(sf::Vector2i{
+          static_cast<int>(pos.x),
+          static_cast<int>(pos.y)
+      });
+      break;
+    }
+  }
+
+  // Rebuild renderer
+  ressources_renderer_.ClearVertices();
+  for (auto& tile : resources_) {
+    ressources_renderer_.AddTile(tile.Pos, grid_offset_,
+                                 ressources_tilesheet_.GetBounds(tile.type));
   }
 }
 

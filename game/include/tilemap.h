@@ -2,6 +2,7 @@
 #define CITYBUILDER_TILEMAP_H
 
 #include <filesystem>
+#include <set>
 #include <vector>
 
 #include "FastNoiseLite.h"
@@ -31,6 +32,7 @@ class Tilemap {
   std::vector<api::tiles::Tile<TerrainTile>>   terrain_;
   std::vector<api::tiles::Tile<ResourceTile>>  resources_;
   std::vector<api::tiles::Tile<HouseTile>>     houses_;
+  std::set<std::pair<float, float>> reserved_resources_;
 
   friend class Saver;
   friend class Loader;
@@ -48,9 +50,17 @@ public:
 
   void Draw(sf::RenderWindow& window);
 
+  std::optional<sf::Vector2f> GetNearestResource(sf::Vector2f from, ResourceTile type) const;
+
+  void RemoveResource(sf::Vector2f pos);
+
   void Save(std::filesystem::path path, Saver& saver);
   void Load(std::filesystem::path path, Loader& loader,
             sf::Vector2f gridOffset, api::ai::AStarGraph& astar_graph);
+
+  std::optional<sf::Vector2f> ReserveNearestResource(sf::Vector2f from, ResourceTile type);
+  void UnreserveResource(sf::Vector2f pos);
+  void RemoveResource(sf::Vector2f pos, api::ai::AStarGraph& graph);
 };
 
 #endif  // CITYBUILDER_TILEMAP_H

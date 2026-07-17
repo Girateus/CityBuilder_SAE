@@ -49,7 +49,7 @@ void Loader::visit(std::filesystem::path& path, Tilemap& tilemap) {
     std::getline(rs, field, ';'); float y    = std::stof(field);
     std::getline(rs, field, ';'); int   type = std::stoi(field);
 
-    // ← ressources jamais walkables
+    //  ressources jamais walkables
     tilemap.resources_.emplace_back(
         api::tiles::Tile<ResourceTile>{{{x, y}, false}, static_cast<ResourceTile>(type)});
   }

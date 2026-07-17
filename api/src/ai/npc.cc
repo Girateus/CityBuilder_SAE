@@ -14,10 +14,23 @@
 
 namespace api::ai {
     using core::ai::behaviour_tree::Status;
+static sf::Vector2i SnapToGrid(sf::Vector2f pos, int offset) {
+  return {
+    (static_cast<int>(pos.x) / offset) * offset,
+    (static_cast<int>(pos.y) / offset) * offset
+};
+}
 
-    void Npc::Setup(const sf::Texture *texture, sf::Vector2i world_size, sf::Vector2i start_position,
-                    AStarGraph &astar_graph){
-        world_size_ = world_size;
+void Npc::Setup(const sf::Texture* texture, sf::Vector2i world_size,
+            sf::Vector2i start_position, AStarGraph& graph,
+            sf::Vector2f house_pos, ResourceTile resource_type,
+            FindResourceFn find_fn, RemoveResourceFn remove_fn, UnreserveFn unreserve_fn){
+      world_size_      = world_size;
+      house_pos_       = house_pos;
+      resource_type_   = resource_type;
+      find_resource_   = std::move(find_fn);
+      remove_resource_ = std::move(remove_fn);
+      unreserve_resource_ = std::move(unreserve_fn);
 
         if (texture != nullptr) {
             sprite_ = sf::Sprite(*texture);
@@ -41,90 +54,152 @@ namespace api::ai {
 
         using namespace core::ai::behaviour_tree::node_factory;
 
-        auto testSequence = MakeSequence();
-        testSequence->AddChild(MakeAction([] { return Status::kSuccess; }));
-        testSequence->AddChild(MakeAction([] { return Status::kFailure; }));
-        testSequence->AddChild(MakeAction([this] { return Locked(); }));
+        auto harvestSequence = MakeSequence();
+    harvestSequence->AddChild(MakeAction([this] { return FindResource(); }));
+    harvestSequence->AddChild(MakeAction([this] { return MoveToResource(); }));
+    harvestSequence->AddChild(MakeAction([this] { return Harvest(); }));
+    harvestSequence->AddChild(MakeAction([this] { return ReturnHome(); }));
+    harvestSequence->AddChild(MakeAction([this] { return WaitAtHome(); }));
 
-        auto wanderSequence = MakeSequence();
-        wanderSequence->AddChild(MakeAction([this] { return WaitForPath(); }));
-        wanderSequence->AddChild(MakeAction([this] { return PickRandomDestination(); }));
-        wanderSequence->AddChild(MakeAction([this] { return MoveToDestination(); }));
+    bt_root_ = std::move(harvestSequence);
+    astar_graph_ = &graph;
+}
 
-        auto basicSelector = MakeSelector();
-        basicSelector->AddChild(std::move(testSequence));
-        basicSelector->AddChild(std::move(wanderSequence));
-
-        bt_root_ = std::move(basicSelector);
-
-        // Rough wander behavior :
-        // Sequence (pick a random destination, then move to it)
-        // PickRandomDestination always succeeds, MoveToDestination stays kRunning
-        // until the motor reaches the target. When the sequence completes, it resets
-        astar_graph_ = &astar_graph;
-    }
+sf::Vector2f Npc::Position() const {
+  return motor_.position();
+}
 
 
-    void Npc::Update(const float dt){
-        motor_.Update(dt);
-        if (bt_root_) {
-            bt_root_->Tick();
+Status Npc::FindResource() {
+  search_cooldown_ -= dt_;
+  if (search_cooldown_ > 0.f) return Status::kRunning;
+  search_cooldown_ = 0.5f;
+
+  path_.SetPath({});
+
+  auto result = find_resource_(house_pos_, resource_type_); // ← ReserveNearestResource
+  if (!result.has_value()) return Status::kRunning;
+
+  current_resource_pos_ = *result;
+
+  constexpr int kOffset = 32;
+  const sf::Vector2i snapped_start{
+    (static_cast<int>(motor_.position().x) / kOffset) * kOffset,
+    (static_cast<int>(motor_.position().y) / kOffset) * kOffset
+};
+  sf::Vector2i snapped_end{
+    (static_cast<int>(current_resource_pos_.x) / kOffset) * kOffset,
+    (static_cast<int>(current_resource_pos_.y) / kOffset) * kOffset
+};
+
+  if (!astar_graph_->ContainsNode(snapped_end)) {
+    bool found = false;
+    for (int radius = 1; radius <= 5 && !found; ++radius) {
+      for (int dx = -radius; dx <= radius && !found; ++dx) {
+        for (int dy = -radius; dy <= radius && !found; ++dy) {
+          sf::Vector2i candidate{
+            snapped_end.x + dx * kOffset,
+            snapped_end.y + dy * kOffset
+        };
+          if (astar_graph_->ContainsNode(candidate)) {
+            snapped_end = candidate;
+            found = true;
+          }
         }
+      }
     }
-
-    void Npc::Draw(sf::RenderWindow &window){
-        if (sprite_.has_value()) {
-
-            // sf::RectangleShape rect{sprite_->getLocalBounds().size};
-            // sprite_->setPosition({32,32});
-            // rect.setPosition(sprite_->getPosition());
-            // window.draw(rect);
-
-            sprite_->setPosition(motor_.position());
-            window.draw(*sprite_);
-
-        }
+    if (!found) {
+      unreserve_resource_(current_resource_pos_); // ← libère si pas atteignable
+      return Status::kRunning;
     }
+  }
 
-    sf::Vector2f Npc::Position() const {
-      return motor_.position();
-    }
+  path_.SetPath(astar_graph_->GetPath(snapped_start, snapped_end));
 
-    Status Npc::WaitForPath(){
+  if (!path_.IsValid()) {
+    unreserve_resource_(current_resource_pos_); // ← libère si pas de chemin
+    return Status::kRunning;
+  }
+
+  search_cooldown_ = 0.f;
+  path_.NextPosition();
+  motor_.set_destination(path_.CurrentPosition());
+  return Status::kSuccess;
+}
+
+Status Npc::MoveToResource() {
+  std::println("MoveToResource appelé | remaining: {}", motor_.remaining_distance());
+  if (motor_.remaining_distance() <= 0.001f) {
+    if (path_.IsGoalReached()) return Status::kSuccess;
+    path_.NextPosition();
+    motor_.set_destination(path_.CurrentPosition());
+  }
+  return Status::kRunning;
+}
+
+Status Npc::Harvest() {
+    harvest_timer_ += dt_;        // ← utilise dt_ au lieu de 0.016f
+    if (harvest_timer_ >= 5.f) {
+        harvest_timer_ = 0.f;
+        remove_resource_(current_resource_pos_);
         return Status::kSuccess;
     }
+    return Status::kRunning;
+}
 
-    Status Npc::PickRandomDestination(){
-      // core::rng::get_value<long long>(0, walkable_tiles_.extent(0) * walkable_tiles_.extent(1));
-      // get the path
-      sf::Vector2i destination = astar_graph_->GetRandomNode();
-      if (ManhattanDistance(sf::Vector2i{motor_.position()}, destination) > 2000) {
-        return Status::kFailure;
-      }
-      path_.SetPath(astar_graph_->GetPath(sf::Vector2i{motor_.position()}, destination));
-      if (path_.IsValid()) {
-        path_.NextPosition();
-        motor_.set_destination(path_.CurrentPosition());
-        return Status::kSuccess;
-      }
+Status Npc::ReturnHome() {
+  // Calcule le chemin retour seulement au premier appel
+  if (!path_.IsValid()) {
+    constexpr int kOffset = 32;
+    const sf::Vector2i start{
+      (static_cast<int>(motor_.position().x) / kOffset) * kOffset,
+      (static_cast<int>(motor_.position().y) / kOffset) * kOffset
+  };
+    const sf::Vector2i end{
+      (static_cast<int>(house_pos_.x) / kOffset) * kOffset,
+      (static_cast<int>(house_pos_.y) / kOffset) * kOffset
+  };
 
-        return Status::kFailure;
+    path_.SetPath(astar_graph_->GetPath(start, end));
+    if (!path_.IsValid()) return Status::kFailure;
+
+    path_.NextPosition();
+    motor_.set_destination(path_.CurrentPosition());
+  }
+
+  if (motor_.remaining_distance() <= 0.001f) {
+    if (path_.IsGoalReached()) {
+      path_.SetPath({});
+      return Status::kSuccess;
     }
+    path_.NextPosition();
+    motor_.set_destination(path_.CurrentPosition());
+  }
+  return Status::kRunning;
+}
 
-    Status Npc::MoveToDestination(){
-      if (motor_.remaining_distance() <= 0.001f) {
-        if (path_.IsGoalReached()) {
-          return Status::kSuccess;
-        }
-        path_.NextPosition();
-        motor_.set_destination(path_.CurrentPosition());
-      }
+Status Npc::WaitAtHome() {
+  home_wait_timer_ += dt_;      // ← utilise dt_ au lieu de 0.016f
+  if (home_wait_timer_ >= 2.f) {
+    home_wait_timer_ = 0.f;
+    path_.SetPath({});
+    return Status::kSuccess;
+  }
+  return Status::kRunning;
+}
 
-        return Status::kRunning;
-    }
 
-    Status Npc::Locked(){
-        std::println("locked");
-        return Status::kRunning;
-    }
+void Npc::Update(const float dt) {
+  dt_ = dt;                      // ← stocker dt pour les états BT
+  motor_.Update(dt);
+  if (bt_root_) bt_root_->Tick();
+}
+
+void Npc::Draw(sf::RenderWindow& window) {
+  if (sprite_.has_value()) {
+    sprite_->setPosition(motor_.position());
+    window.draw(*sprite_);
+  }
+}
+
 } // namespace api::ai
